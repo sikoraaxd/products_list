@@ -4,95 +4,89 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Список продуктов</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧲</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🛒</text></svg>">
+  <script>
+    window.FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBT5IENDVv97PhJGW8mN6NGWMvRPUJtjW0",
+      authDomain: "products-list-fdeea.firebaseapp.com",
+      databaseURL: "https://products-list-fdeea-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "products-list-fdeea",
+      storageBucket: "products-list-fdeea.firebasestorage.app",
+      messagingSenderId: "321603427183",
+      appId: "1:321603427183:web:6cf0386223f5eb3a3de69a",
+      measurementId: "G-MGXVPPZMD5"
+    };
+  </script>
+ 
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
     :root{
-      --bg:#f0e6ff;            /* сиреневый фон как на примере */
-      --card:#ffffff;          /* белая «магнитная доска» */
-      --ink:#1f2937;           /* тёмный текст */
-      --muted:#6b7280;         /* приглушённый */
-      --accent-start:#ff7aa8;  /* градиент для шапок/кнопок */
+      --bg:#f0e6ff;
+      --card:#ffffff;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --accent-start:#ff7aa8;
       --accent-end:#f6c14d;
-      --brand:#7c3aed;         /* фиолетовый */
-      --led-off:#0f172a;       /* «дырочка» под диод */
-      --led-on:#2cd36f;        /* неоново‑зелёный */
-      --radius:22px;
-      --space:12px;
+      --brand:#7c3aed;
+      --led-off:#ef4444;       /* КРАСНЫЙ: нет продукта */
+      --led-on:#22c55e;        /* ЗЕЛЁНЫЙ: продукт взят */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0; font:16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Noto Sans', 'Helvetica Neue', Arial, 'Apple Color Emoji','Segoe UI Emoji';
-      color:var(--ink);
-      background: radial-gradient(1300px 900px at 80% -100px, #fff 0, #f7ecff 35%, var(--bg) 100%);
-    }
+    body{margin:0;font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Noto Sans','Helvetica Neue',Arial,'Apple Color Emoji','Segoe UI Emoji';color:var(--ink);background:radial-gradient(1300px 900px at 80% -100px,#fff 0,#f7ecff 35%,var(--bg) 100%)}
     .wrap{max-width:980px;margin:40px auto;padding:0 16px}
-
-    /* Верхний баннер */
     .banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between}
-    .pill{background:linear-gradient(135deg,var(--accent-start),var(--accent-end));
-      color:#fff;padding:10px 16px;border-radius:16px;font-weight:700;letter-spacing:.5px;
-      box-shadow:0 8px 24px rgba(0,0,0,.15)}
     h1{margin:.2em 0 0;font-size:clamp(28px,4.2vw,48px);line-height:1.05;letter-spacing:.5px;text-transform:uppercase}
     .sub{color:var(--muted);font-size:14px}
-
-    /* Карточка со списком */
     .card{position:relative;margin-top:20px;background:var(--card);border-radius:28px;padding:22px 18px 18px;box-shadow:0 10px 25px rgba(124,58,237,.25)}
-    .card:before, .card:after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none}
-    .card:after{box-shadow:inset 0 0 0 2px rgba(0,0,0,.04)}
+    .card:after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(0,0,0,.04)}
 
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:2px 2px 14px}
     .toolbar .search{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:14px;padding:10px 12px}
     .toolbar input[type="search"]{border:0;background:transparent;outline:0;width:100%;font-size:15px}
-
-    button{appearance:none;border:0;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#fff;font-weight:700;
-      padding:10px 14px;border-radius:14px;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.15);transition:transform .06s ease}
+    button{appearance:none;border:0;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#fff;font-weight:700;padding:10px 14px;border-radius:14px;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.15);transition:transform .06s ease}
     button:hover{transform:translateY(-1px)}
     button.secondary{background:#f3f4f6;color:#111;font-weight:600;box-shadow:none}
 
-    /* Сетка списка */
-    .grid{display:grid;grid-template-columns:1fr;gap:2px}
+    .grid{display:grid;grid-template-columns:1fr;gap:4px}
     @media (min-width:700px){.grid{grid-template-columns:1fr 1fr}}
 
     /* Элемент списка */
-    .item{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 12px;border-radius:12px;cursor:pointer;user-select:none;position:relative}
-    .item:hover{background:#f8fafc}
-    .item input{position:absolute;opacity:0;pointer-events:none}
-    .switch{position:relative;width:46px;height:26px;background:#e5e7eb;border-radius:9999px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.05);transition:background .2s, box-shadow .2s}
-    .switch::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .2s}
-    .item input:checked + .switch::before{transform:translateX(20px)}
+    .item{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:12px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+    .item[draggable="true"]{cursor:grab}
+    .item.dragging{opacity:.6}
+    .handle{font-size:18px;line-height:1;cursor:grab;user-select:none;opacity:.6}
     .name{font-weight:800;letter-spacing:.2px;flex:1}
-    .item input:focus-visible + .switch{outline:3px solid #60a5fa;outline-offset:3px}
-    .item input:checked + .switch{background:var(--led-on); box-shadow:0 0 10px rgba(44,211,111,.7), 0 0 22px rgba(44,211,111,.35)}
-    .item input:checked ~ .name{opacity:1}
+    .item input{position:absolute;opacity:0;pointer-events:none}
+    .switch{position:relative;width:46px;height:26px;background:var(--led-off);border-radius:9999px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.05);transition:background .2s, box-shadow .2s}
+    .switch::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .2s}
+    .item input:checked + .switch{background:var(--led-on); box-shadow:0 0 10px rgba(34,197,94,.6), 0 0 22px rgba(34,197,94,.35)}
+    .item input:checked + .switch::before{transform:translateX(20px)}
 
-    .section-title{font-size:18px;font-weight:900;letter-spacing:.4px;margin:4px 12px;color:#111}
+    .del{background:#fee2e2;color:#991b1b;border:0;border-radius:10px;padding:6px 8px;font-weight:700;cursor:pointer}
+    .del:hover{background:#fecaca}
 
-    /* Добавление своего пункта */
     form.add{display:flex;gap:8px;flex-wrap:wrap;margin:6px 2px 10px}
     form.add input{flex:1 1 220px;border:0;background:#f3f4f6;border-radius:14px;padding:10px 12px;font-size:15px;outline:0}
 
-    /* Итоги */
     .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
 
-    /* Тост */
     .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;box-shadow:0 10px 24px rgba(0,0,0,.25)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-2px)}
-
-    /* Печать */
-    @media print{.banner,.toolbar,form.add,.footer,.pill{display:none}.card{box-shadow:none;border:0}body{background:#fff}}
+    @media print{.banner,.toolbar,form.add,.footer{display:none}.card{box-shadow:none;border:0}body{background:#fff}}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="banner">      <h1>Список продуктов</h1>
-      <div class="sub">Переключайте тумблеры — всё сохраняется в этом браузере.</div>
+    <div class="banner">
+      <h1>Список продуктов</h1>
+      <div class="sub">Тумблер зелёный — берём; красный — нет. Данные сохраняются локально и могут синхронизироваться через Firebase (если настроить).</div>
     </div>
 
     <div class="card" role="region" aria-label="Список продуктов">
       <div class="toolbar">
-        <div class="search" role="search">
-          🔎
+        <div class="search" role="search">🔎
           <input id="q" type="search" placeholder="Поиск по списку… (например, молоко)" autocomplete="off" />
         </div>
         <button class="secondary" id="btn-all">Выделить всё</button>
@@ -110,7 +104,7 @@
 
       <div class="footer">
         <span id="counter">0 выбрано</span>
-        <span>Сделано с ♥ — можно установить на домашний экран</span>
+        <span id="syncstate">Режим: локальный</span>
       </div>
     </div>
   </div>
@@ -118,8 +112,12 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
+    // ====== Конфиг синхронизации (опционально) ======
+    const ROOM = new URLSearchParams(location.search).get('room') || 'public';
+    const REMOTE_ENABLED = typeof window.FIREBASE_CONFIG === 'object' && window.FIREBASE_CONFIG !== null;
+
     // ===== Данные =====
-    const STORAGE_KEY = 'magnet-list-v2';
+    const STORAGE_KEY = 'magnet-list-v3';
     const DEFAULT_ITEMS = [
       'Апельсины','Бананы','Виноград','Вода','Грибы','Йогурт','Картофель','Кетчуп','Кофе','Колбаса',
       'Каша','Курица','Лук','Макароны','Масло','Майонез','Мёд','Молоко','Мясо','Огурцы',
@@ -127,7 +125,6 @@
       'Сок','Сыр','Сырный соус','Творог','Чай','Чеснок','Шоколад','Хлеб','Яблоки','Яйца'
     ];
 
-    /** Загружаем состояние из localStorage или создаём по умолчанию */
     function loadState(){
       try{
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -135,7 +132,28 @@
       }catch(e){}
       return {items: DEFAULT_ITEMS.map(name => ({name, checked:false}))};
     }
-    function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    let state = loadState();
+    function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+    // ===== Firebase (если настроено) =====
+    let ref = null;
+    if(REMOTE_ENABLED){
+      try{
+        const app = firebase.initializeApp(window.FIREBASE_CONFIG);
+        const db = firebase.database();
+        ref = db.ref('lists/'+ROOM);
+        document.getElementById('syncstate').textContent = 'Режим: онлайн (комната '+ROOM+')';
+        ref.on('value', snap => {
+          const remote = snap.val();
+          if(remote && JSON.stringify(remote.items) !== JSON.stringify(state.items)){
+            state = remote; render(document.getElementById('q').value);
+          }
+        });
+      }catch(e){
+        console.warn('Firebase init error', e);
+      }
+    }
+    function saveRemote(){ if(ref){ ref.set(state).catch(()=>{}); } }
 
     // ===== Рендер =====
     const listEl = document.getElementById('list');
@@ -143,14 +161,9 @@
     const toastEl = document.getElementById('toast');
     const qEl = document.getElementById('q');
 
-    let state = loadState();
-
-    function uidFromName(name){
-      return 'i-' + name.toLowerCase().replace(/[^a-zа-яё0-9]+/gi,'-');
-    }
+    let dragIndex = null;
 
     function render(filter=''){
-      // Очистка
       listEl.innerHTML = '';
       const norm = s => s.toLowerCase().replace('ё','е');
       const f = norm(filter.trim());
@@ -158,34 +171,60 @@
       const frag = document.createDocumentFragment();
       state.items.forEach((item, idx) => {
         if(f && !norm(item.name).includes(f)) return;
-        const id = uidFromName(item.name) + '-' + idx;
-        const label = document.createElement('label');
-        label.className = 'item';
+        const id = 'i-'+ idx;
+
+        const row = document.createElement('div');
+        row.className = 'item';
+        row.draggable = true;
+        row.dataset.index = idx;
+
+        const handle = document.createElement('span');
+        handle.className = 'handle';
+        handle.textContent = '⋮⋮';
+        row.appendChild(handle);
 
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.id = id;
         input.checked = !!item.checked;
-        input.setAttribute('aria-label', item.name);
+        row.appendChild(input);
 
         const sw = document.createElement('span');
         sw.className = 'switch';
         sw.setAttribute('aria-hidden','true');
+        row.appendChild(sw);
 
-        const name = document.createElement('span');
-        name.className = 'name';
-        name.textContent = item.name;
+        const label = document.createElement('label');
+        label.className = 'name';
+        label.setAttribute('for', id);
+        label.textContent = item.name;
+        row.appendChild(label);
 
-        label.appendChild(name);
-        label.appendChild(input);
-        label.appendChild(sw);
-        frag.appendChild(label);
+        const del = document.createElement('button');
+        del.className = 'del';
+        del.type = 'button';
+        del.setAttribute('aria-label','Удалить');
+        del.textContent = '✕';
+        row.appendChild(del);
 
-        input.addEventListener('change', () => {
-          item.checked = input.checked;
-          saveState();
-          updateCounter();
+        // События
+        input.addEventListener('change', () => { item.checked = input.checked; persist(); updateCounter(); });
+        del.addEventListener('click', (e) => { e.stopPropagation(); state.items.splice(idx,1); persist(); render(qEl.value); showToast('Удалено'); });
+
+        row.addEventListener('dragstart', e => { dragIndex = idx; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+        row.addEventListener('dragend', () => { dragIndex = null; row.classList.remove('dragging'); });
+        row.addEventListener('dragover', e => { e.preventDefault(); });
+        row.addEventListener('drop', e => {
+          e.preventDefault();
+          const to = Number(e.currentTarget.dataset.index);
+          if(dragIndex===null || dragIndex===to) return;
+          const [moved] = state.items.splice(dragIndex,1);
+          state.items.splice(to,0,moved);
+          persist();
+          render(qEl.value);
         });
+
+        frag.appendChild(row);
       });
       listEl.appendChild(frag);
       updateCounter();
@@ -196,58 +235,42 @@
       counterEl.textContent = cnt + ' выбрано';
     }
 
-    // ===== Действия =====
-    document.getElementById('btn-clear').addEventListener('click', () => {
-      state.items.forEach(i=>i.checked=false); saveState(); render(qEl.value);
-    });
-    document.getElementById('btn-all').addEventListener('click', () => {
-      state.items.forEach(i=>i.checked=true); saveState(); render(qEl.value);
-    });
+    function persist(){ saveLocal(); saveRemote(); }
+
+    // ===== Кнопки =====
+    document.getElementById('btn-clear').addEventListener('click', () => { state.items.forEach(i=>i.checked=false); persist(); render(qEl.value); });
+    document.getElementById('btn-all').addEventListener('click', () => { state.items.forEach(i=>i.checked=true); persist(); render(qEl.value); });
 
     document.getElementById('btn-copy').addEventListener('click', async () => {
-      const text = state.items.filter(i=>i.checked).map(i=>'• '+i.name).join('\n');
-      try{ await navigator.clipboard.writeText(text); showToast('Скопировано в буфер обмена'); }
-      catch(e){ showToast('Не удалось скопировать :(') }
+      const text = state.items.filter(i=>i.checked).map(i=>'• '+i.name).join('');
+      try{ await navigator.clipboard.writeText(text); showToast('Скопировано в буфер обмена'); } catch(e){ showToast('Не удалось скопировать :(') }
     });
 
     document.getElementById('btn-share').addEventListener('click', async () => {
       const items = state.items.filter(i=>i.checked).map(i=>i.name);
       const text = 'Мой список покупок: '+ (items.length? items.join(', '): 'ничего не выбрано');
-      if(navigator.share){
-        try{ await navigator.share({title:'Список покупок', text}); }
-        catch(e){ /* ignore */ }
-      } else {
-        try{ await navigator.clipboard.writeText(text); showToast('Скопировано — можно вставлять'); }
-        catch(e){ showToast('Поделиться не удалось') }
-      }
+      const url = location.origin + location.pathname + '?room=' + encodeURIComponent(ROOM);
+      if(navigator.share){ try{ await navigator.share({title:'Список покупок', text, url}); } catch(e){} }
+      else{ try{ await navigator.clipboard.writeText(text + '' + url); showToast('Скопировано — можно вставлять'); } catch(e){ showToast('Поделиться не удалось') } }
     });
 
-    qEl.addEventListener('input', () => render(qEl.value));
+    document.getElementById('q').addEventListener('input', () => render(qEl.value));
 
-    // Добавление своего пункта
     document.getElementById('add-form').addEventListener('submit', (e)=>{
       e.preventDefault();
       const input = document.getElementById('add-input');
       let name = (input.value||'').trim();
       if(name.length < 2) return;
-      // уже есть? — просто прокликаем/прокрутим
       const existing = state.items.find(i=>i.name.toLowerCase()===name.toLowerCase());
-      if(existing){
-        existing.checked = true; saveState(); render(qEl.value); showToast('Уже в списке — отметил'); input.value='';
-        return;
-      }
-      // Добавляем в конец
+      if(existing){ existing.checked = true; persist(); render(qEl.value); showToast('Уже в списке — отметил'); input.value=''; return; }
       state.items.push({name, checked:true});
-      saveState();
+      persist();
       input.value='';
       render(qEl.value);
       showToast('Добавлено');
     });
 
-    function showToast(msg){
-      toastEl.textContent = msg; toastEl.classList.add('show');
-      clearTimeout(showToast.t); showToast.t = setTimeout(()=>toastEl.classList.remove('show'), 1600);
-    }
+    function showToast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(showToast.t); showToast.t = setTimeout(()=>toastEl.classList.remove('show'), 1600); }
 
     // Первичный рендер
     render();
