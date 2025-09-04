@@ -2,9 +2,16 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
+  <!-- запрет зума и аккуратные отступы на iOS -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Список продуктов" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Список продуктов</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🛒</text></svg>">
+
+  <!-- фавиконка вкладки — яблочко -->
+  <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍎</text></svg>">
   <script>
     window.FIREBASE_CONFIG = {
       apiKey: "AIzaSyBT5IENDVv97PhJGW8mN6NGWMvRPUJtjW0",
@@ -19,6 +26,7 @@
   </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <style>
     :root{
       --bg:#f0e6ff;
@@ -27,32 +35,58 @@
       --muted:#6b7280;
       --accent-start:#ff7aa8;
       --accent-end:#f6c14d;
-      --brand:#7c3aed;
-      --led-off:#ef4444;       /* КРАСНЫЙ: нет продукта */
-      --led-on:#22c55e;        /* ЗЕЛЁНЫЙ: продукт взят */
+      --surface:#f3f4f6;
+      --led-off:#ef4444;   /* КРАСНЫЙ: нет продукта */
+      --led-on:#22c55e;    /* ЗЕЛЁНЫЙ: берём */
     }
+    /* Тёмная тема — оттенки близкие к Discord */
+    .theme-dark{
+      --bg:#1E1F22;
+      --card:#2B2D31;
+      --ink:#E6E8EA;
+      --muted:#B5BAC1;
+      --accent-start:#5865F2;
+      --accent-end:#7A86FF;
+      --surface:#383A40;
+    }
+
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Noto Sans','Helvetica Neue',Arial,'Apple Color Emoji','Segoe UI Emoji';color:var(--ink);background:radial-gradient(1300px 900px at 80% -100px,#fff 0,#f7ecff 35%,var(--bg) 100%)}
+    body{
+      margin:0;
+      font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Noto Sans','Helvetica Neue',Arial,'Apple Color Emoji','Segoe UI Emoji';
+      color:var(--ink);
+      background:radial-gradient(1300px 900px at 80% -100px,#fff 0,#f7ecff 35%,var(--bg) 100%)
+    }
+    body.theme-dark{
+      background:radial-gradient(1300px 900px at 80% -100px,#111 0,#1E1F22 35%, var(--bg) 100%)
+    }
+
     .wrap{max-width:980px;margin:40px auto;padding:0 16px}
     .banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between}
     h1{margin:.2em 0 0;font-size:clamp(28px,4.2vw,48px);line-height:1.05;letter-spacing:.5px;text-transform:uppercase}
-    .sub{color:var(--muted);font-size:14px}
     .card{position:relative;margin-top:20px;background:var(--card);border-radius:28px;padding:22px 18px 18px;box-shadow:0 10px 25px rgba(124,58,237,.25)}
     .card:after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(0,0,0,.04)}
 
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:2px 2px 14px}
-    .toolbar .search{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:14px;padding:10px 12px}
-    .toolbar input[type="search"]{border:0;background:transparent;outline:0;width:100%;font-size:15px}
+    .toolbar .search{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:10px 12px}
+    .toolbar input[type="search"]{border:0;background:transparent;outline:0;width:100%;font-size:15px;color:var(--ink)}
+
+    .btns{display:flex;flex-wrap:wrap;gap:10px;width:100%}
+    @media (max-width:700px){
+      .toolbar{align-items:stretch}
+      .btns button{flex:1 1 100%} /* одинаковая ширина на мобилке */
+    }
+
     button{appearance:none;border:0;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));color:#fff;font-weight:700;padding:10px 14px;border-radius:14px;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.15);transition:transform .06s ease}
     button:hover{transform:translateY(-1px)}
-    button.secondary{background:#f3f4f6;color:#111;font-weight:600;box-shadow:none}
+    button.secondary{background:var(--surface);color:var(--ink);box-shadow:none}
 
     .grid{display:grid;grid-template-columns:1fr;gap:4px}
     @media (min-width:700px){.grid{grid-template-columns:1fr 1fr}}
 
     /* Элемент списка */
-    .item{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:12px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+    .item{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:12px;background:var(--card);box-shadow:0 1px 0 rgba(0,0,0,.04)}
     .item[draggable="true"]{cursor:grab}
     .item.dragging{opacity:.6}
     .handle{font-size:18px;line-height:1;cursor:grab;user-select:none;opacity:.6}
@@ -66,18 +100,23 @@
     .del{background:#fee2e2;color:#991b1b;border:0;border-radius:10px;padding:6px 8px;font-weight:700;cursor:pointer}
     .del:hover{background:#fecaca}
 
+    /* Кнопки перемещения (для мобилы) */
+    .move{display:none; gap:6px}
+    .move button{background:var(--surface);border:0;border-radius:10px;padding:6px 8px;font-weight:700;cursor:pointer;color:var(--ink)}
+    @media (max-width:700px){ .handle{display:none} .move{display:flex} }
+
     form.add{display:flex;gap:8px;flex-wrap:wrap;margin:6px 2px 10px}
-    form.add input{flex:1 1 220px;border:0;background:#f3f4f6;border-radius:14px;padding:10px 12px;font-size:15px;outline:0}
+    form.add input{flex:1 1 220px;border:0;background:var(--surface);border-radius:14px;padding:10px 12px;font-size:15px;outline:0;color:var(--ink)}
 
     .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
 
     .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;box-shadow:0 10px 24px rgba(0,0,0,.25)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-2px)}
+
     @media print{.banner,.toolbar,form.add,.footer{display:none}.card{box-shadow:none;border:0}body{background:#fff}}
-  /* Отключаем выделение текста на блоках и предотвращаем дабл-тап зум/пинч */
-    .item, .handle, .switch, .del, .toolbar button, .grid{
-      -webkit-user-select:none; user-select:none; -ms-user-select:none; -webkit-touch-callout:none; touch-action:manipulation;
-    }
+
+    /* отключаем выделение текста и лишние подсветки */
+    .item, .handle, .switch, .del, .toolbar button, .grid{ -webkit-user-select:none; user-select:none; -ms-user-select:none; -webkit-touch-callout:none; touch-action:manipulation; }
     button, .item, .switch, .handle, .del{ -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
@@ -85,7 +124,6 @@
   <div class="wrap">
     <div class="banner">
       <h1>Список продуктов</h1>
-      <div class="sub">Тумблер зелёный — берём; красный — нет. Данные сохраняются локально и могут синхронизироваться через Firebase (если настроить).</div>
     </div>
 
     <div class="card" role="region" aria-label="Список продуктов">
@@ -93,11 +131,14 @@
         <div class="search" role="search">🔎
           <input id="q" type="search" placeholder="Поиск по списку… (например, молоко)" autocomplete="off" />
         </div>
-        <button class="secondary" id="btn-all">Выделить всё</button>
-        <button class="secondary" id="btn-clear">Сбросить</button>
-        <button class="secondary" id="btn-sort" title="Отсортировать от А до Я">Сортировать А→Я</button>
-        <button id="btn-copy" title="Скопировать отмеченные">Скопировать</button>
-        <button id="btn-share" title="Поделиться списком">Поделиться</button>
+        <div class="btns">
+          <button class="secondary" id="btn-all">Выделить всё</button>
+          <button class="secondary" id="btn-clear">Сбросить</button>
+          <button class="secondary" id="btn-sort" title="Отсортировать от А до Я">Сортировать А→Я</button>
+          <button id="btn-dark" title="Переключить тему">Тёмная тема</button>
+          <button id="btn-copy" title="Скопировать отмеченные">Скопировать</button>
+          <button id="btn-share" title="Поделиться списком">Поделиться</button>
+        </div>
       </div>
 
       <div id="list" class="grid" aria-live="polite"></div>
@@ -117,55 +158,49 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // ====== Конфиг синхронизации (опционально) ======
+    // ====== Общие настройки и (опционально) онлайн-синхронизация ======
     const ROOM = new URLSearchParams(location.search).get('room') || 'public';
     const REMOTE_ENABLED = typeof window.FIREBASE_CONFIG === 'object' && window.FIREBASE_CONFIG !== null;
 
     // ===== Данные =====
-    const STORAGE_KEY = 'magnet-list-v3';
-    const DEFAULT_ITEMS = [
-      'Апельсины','Бананы','Виноград','Вода','Грибы','Йогурт','Картофель','Кетчуп','Кофе','Колбаса',
-      'Каша','Курица','Лук','Макароны','Масло','Майонез','Мёд','Молоко','Мясо','Огурцы',
-      'Перец','Пельмени','Пиво','Помидоры','Рис','Рыба','Сахар','Сметана','Сливки','Соль',
-      'Сок','Сыр','Сырный соус','Творог','Чай','Чеснок','Шоколад','Хлеб','Яблоки','Яйца'
-    ];
+    const STORAGE_KEY = 'plist-v6';     // новое имя хранилища
+    let state = loadState();            // { items: [{name, checked}], ... }
 
     function loadState(){
       try{
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if(data && Array.isArray(data.items)) return data;
+        if (data && Array.isArray(data.items)) return data;
       }catch(e){}
-      return {items: DEFAULT_ITEMS.map(name => ({name, checked:false}))};
+      // старт без дефолтного списка
+      return { items: [] };
     }
-    let state = loadState();
     function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-    // ===== Firebase (если настроено) =====
+    // ===== Firebase (если задан конфиг) =====
     let ref = null;
     if(REMOTE_ENABLED){
       try{
-        const app = firebase.initializeApp(window.FIREBASE_CONFIG);
+        firebase.initializeApp(window.FIREBASE_CONFIG);
         const db = firebase.database();
         ref = db.ref('lists/'+ROOM);
-        document.getElementById('syncstate').textContent = 'Режим: онлайн (комната '+ROOM+')';
+        document.getElementById('syncstate').textContent = 'Режим: онлайн (комната ' + ROOM + ')';
         ref.on('value', snap => {
           const remote = snap.val();
           if(remote && JSON.stringify(remote.items) !== JSON.stringify(state.items)){
             state = remote; render(document.getElementById('q').value);
           }
         });
-      }catch(e){
-        console.warn('Firebase init error', e);
-      }
+      }catch(e){ console.warn('Firebase init error', e); }
     }
     function saveRemote(){ if(ref){ ref.set(state).catch(()=>{}); } }
+    function persist(){ saveLocal(); saveRemote(); }
 
     // ===== Рендер =====
     const listEl = document.getElementById('list');
     const counterEl = document.getElementById('counter');
     const toastEl = document.getElementById('toast');
     const qEl = document.getElementById('q');
-
+    const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
     let dragIndex = null;
 
     function render(filter=''){
@@ -180,7 +215,7 @@
 
         const row = document.createElement('div');
         row.className = 'item';
-        row.draggable = true;
+        row.draggable = !IS_TOUCH; // на мобиле не используем нативный DnD
         row.dataset.index = idx;
 
         const handle = document.createElement('span');
@@ -205,6 +240,14 @@
         label.textContent = item.name;
         row.appendChild(label);
 
+        // Кнопки перемещения (для мобилы)
+        const move = document.createElement('div');
+        move.className = 'move';
+        const up = document.createElement('button'); up.className='mv-up'; up.type='button'; up.textContent='↑'; up.title='Вверх';
+        const down = document.createElement('button'); down.className='mv-down'; down.type='button'; down.textContent='↓'; down.title='Вниз';
+        move.appendChild(up); move.appendChild(down);
+        row.appendChild(move);
+
         const del = document.createElement('button');
         del.className = 'del';
         del.type = 'button';
@@ -216,10 +259,15 @@
         input.addEventListener('change', () => { item.checked = input.checked; persist(); updateCounter(); });
         del.addEventListener('click', (e) => { e.stopPropagation(); state.items.splice(idx,1); persist(); render(qEl.value); showToast('Удалено'); });
 
-        row.addEventListener('dragstart', e => { dragIndex = idx; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
-        row.addEventListener('dragend', () => { dragIndex = null; row.classList.remove('dragging'); });
-        row.addEventListener('dragover', e => { e.preventDefault(); });
-        row.addEventListener('drop', e => {
+        up.addEventListener('click', (e)=>{ e.stopPropagation(); if(idx<=0) return; const it = state.items.splice(idx,1)[0]; state.items.splice(idx-1,0,it); persist(); render(qEl.value); });
+        down.addEventListener('click', (e)=>{ e.stopPropagation(); if(idx>=state.items.length-1) return; const it = state.items.splice(idx,1)[0]; state.items.splice(idx+1,0,it); persist(); render(qEl.value); });
+
+        // Drag & drop — только на десктопе
+        row.addEventListener('dragstart', e => { if(IS_TOUCH) return; dragIndex = idx; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+        row.addEventListener('dragend',   () => { if(IS_TOUCH) return; dragIndex = null; row.classList.remove('dragging'); });
+        row.addEventListener('dragover',  e => { if(IS_TOUCH) return; e.preventDefault(); });
+        row.addEventListener('drop',      e => {
+          if(IS_TOUCH) return;
           e.preventDefault();
           const to = Number(e.currentTarget.dataset.index);
           if(dragIndex===null || dragIndex===to) return;
@@ -240,34 +288,60 @@
       counterEl.textContent = cnt + ' выбрано';
     }
 
-    function persist(){ saveLocal(); saveRemote(); }
+    // ===== Тема, иконка для «На экран домой» и манифест =====
+    const THEME_KEY = 'plist-theme';
+    function applyTheme(t){
+      document.body.classList.toggle('theme-dark', t==='dark');
+      localStorage.setItem(THEME_KEY, t);
+      const b=document.getElementById('btn-dark');
+      if(b) b.textContent = t==='dark' ? 'Светлая тема' : 'Тёмная тема';
+    }
+    const prefTheme = localStorage.getItem(THEME_KEY) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(prefTheme);
+
+    (function setupPWA(){
+      function createAppleIcon(){
+        try{
+          const c=document.createElement('canvas'); c.width=c.height=512; const ctx=c.getContext('2d');
+          const styles = getComputedStyle(document.body);
+          ctx.fillStyle = styles.getPropertyValue('--card') || '#2B2D31'; ctx.fillRect(0,0,512,512);
+          ctx.font='400px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('🍎',256,280);
+          return c.toDataURL('image/png');
+        }catch(e){ return null; }
+      }
+      const icon = createAppleIcon();
+      if(icon){ const l=document.createElement('link'); l.rel='apple-touch-icon'; l.href=icon; document.head.appendChild(l); }
+      const m=document.createElement('link'); m.rel='manifest';
+      const manifest={
+        name:'Список продуктов', short_name:'Список',
+        start_url: location.pathname + location.search,
+        display:'standalone', background_color:'#2B2D31', theme_color:'#5865F2',
+        icons: icon? [{src:icon,sizes:'512x512',type:'image/png'}]:[]
+      };
+      const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'}); m.href=URL.createObjectURL(blob); document.head.appendChild(m);
+    })();
 
     // ===== Кнопки =====
     document.getElementById('btn-clear').addEventListener('click', () => {
-      state.items.forEach(i=>i.checked=false);
-      persist();
-      render(qEl.value);
+      state.items.forEach(i=>i.checked=false); persist(); render(qEl.value);
     });
-
     document.getElementById('btn-all').addEventListener('click', () => {
-      state.items.forEach(i=>i.checked=true);
-      persist();
-      render(qEl.value);
+      state.items.forEach(i=>i.checked=true); persist(); render(qEl.value);
     });
-
     document.getElementById('btn-sort').addEventListener('click', () => {
       state.items.sort((a,b)=>a.name.localeCompare(b.name,'ru',{sensitivity:'base'}));
-      persist();
-      render(qEl.value);
-      showToast('Отсортировано А→Я');
+      persist(); render(qEl.value); showToast('Отсортировано А→Я');
     });
-
+    document.getElementById('btn-dark').addEventListener('click', () => {
+      const next = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+      applyTheme(next);
+    });
     document.getElementById('btn-copy').addEventListener('click', async () => {
       const text = state.items.filter(i=>i.checked).map(i=>'• '+i.name).join('\n');
       try{ await navigator.clipboard.writeText(text); showToast('Скопировано в буфер обмена'); }
       catch(e){ showToast('Не удалось скопировать :('); }
     });
-
     document.getElementById('btn-share').addEventListener('click', async () => {
       const items = state.items.filter(i=>i.checked).map(i=>i.name);
       const text = 'Мой список покупок: '+ (items.length? items.join(', '): 'ничего не выбрано');
@@ -275,8 +349,7 @@
       if(navigator.share){ try{ await navigator.share({title:'Список покупок', text, url}); } catch(e){} }
       else{ try{ await navigator.clipboard.writeText(text + '\n' + url); showToast('Скопировано — можно вставлять'); } catch(e){ showToast('Поделиться не удалось'); } }
     });
-
-    document.getElementById('q').addEventListener('input', () => render(qEl.value));
+    qEl.addEventListener('input', () => render(qEl.value));
 
     document.getElementById('add-form').addEventListener('submit', (e)=>{
       e.preventDefault();
@@ -292,11 +365,13 @@
       showToast('Добавлено');
     });
 
-    function showToast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(showToast.t); showToast.t = setTimeout(()=>toastEl.classList.remove('show'), 1600); }
+    function showToast(msg){
+      toastEl.textContent = msg; toastEl.classList.add('show');
+      clearTimeout(showToast.t); showToast.t = setTimeout(()=>toastEl.classList.remove('show'), 1600);
+    }
 
-    // Первичный рендер
+    // первичный рендер
     render();
   </script>
 </body>
 </html>
-
