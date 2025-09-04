@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Список продуктов</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🛒</text></svg>">
   <script>
@@ -17,7 +17,6 @@
       measurementId: "G-MGXVPPZMD5"
     };
   </script>
- 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
@@ -75,6 +74,11 @@
     .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;box-shadow:0 10px 24px rgba(0,0,0,.25)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-2px)}
     @media print{.banner,.toolbar,form.add,.footer{display:none}.card{box-shadow:none;border:0}body{background:#fff}}
+  /* Отключаем выделение текста на блоках и предотвращаем дабл-тап зум/пинч */
+    .item, .handle, .switch, .del, .toolbar button, .grid{
+      -webkit-user-select:none; user-select:none; -ms-user-select:none; -webkit-touch-callout:none; touch-action:manipulation;
+    }
+    button, .item, .switch, .handle, .del{ -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
 <body>
@@ -91,6 +95,7 @@
         </div>
         <button class="secondary" id="btn-all">Выделить всё</button>
         <button class="secondary" id="btn-clear">Сбросить</button>
+        <button class="secondary" id="btn-sort" title="Отсортировать от А до Я">Сортировать А→Я</button>
         <button id="btn-copy" title="Скопировать отмеченные">Скопировать</button>
         <button id="btn-share" title="Поделиться списком">Поделиться</button>
       </div>
@@ -238,12 +243,29 @@
     function persist(){ saveLocal(); saveRemote(); }
 
     // ===== Кнопки =====
-    document.getElementById('btn-clear').addEventListener('click', () => { state.items.forEach(i=>i.checked=false); persist(); render(qEl.value); });
-    document.getElementById('btn-all').addEventListener('click', () => { state.items.forEach(i=>i.checked=true); persist(); render(qEl.value); });
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      state.items.forEach(i=>i.checked=false);
+      persist();
+      render(qEl.value);
+    });
+
+    document.getElementById('btn-all').addEventListener('click', () => {
+      state.items.forEach(i=>i.checked=true);
+      persist();
+      render(qEl.value);
+    });
+
+    document.getElementById('btn-sort').addEventListener('click', () => {
+      state.items.sort((a,b)=>a.name.localeCompare(b.name,'ru',{sensitivity:'base'}));
+      persist();
+      render(qEl.value);
+      showToast('Отсортировано А→Я');
+    });
 
     document.getElementById('btn-copy').addEventListener('click', async () => {
-      const text = state.items.filter(i=>i.checked).map(i=>'• '+i.name).join('');
-      try{ await navigator.clipboard.writeText(text); showToast('Скопировано в буфер обмена'); } catch(e){ showToast('Не удалось скопировать :(') }
+      const text = state.items.filter(i=>i.checked).map(i=>'• '+i.name).join('\n');
+      try{ await navigator.clipboard.writeText(text); showToast('Скопировано в буфер обмена'); }
+      catch(e){ showToast('Не удалось скопировать :('); }
     });
 
     document.getElementById('btn-share').addEventListener('click', async () => {
@@ -251,7 +273,7 @@
       const text = 'Мой список покупок: '+ (items.length? items.join(', '): 'ничего не выбрано');
       const url = location.origin + location.pathname + '?room=' + encodeURIComponent(ROOM);
       if(navigator.share){ try{ await navigator.share({title:'Список покупок', text, url}); } catch(e){} }
-      else{ try{ await navigator.clipboard.writeText(text + '' + url); showToast('Скопировано — можно вставлять'); } catch(e){ showToast('Поделиться не удалось') } }
+      else{ try{ await navigator.clipboard.writeText(text + '\n' + url); showToast('Скопировано — можно вставлять'); } catch(e){ showToast('Поделиться не удалось'); } }
     });
 
     document.getElementById('q').addEventListener('input', () => render(qEl.value));
@@ -277,3 +299,4 @@
   </script>
 </body>
 </html>
+
